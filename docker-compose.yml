@@ -1,19 +1,4 @@
 services:
-  catalog-cron:
-    image: alpine:latest
-    container_name: gutendex_catalog_cron
-    volumes:
-      - .:/app:ro
-      - /var/run/docker.sock:/var/run/docker.sock # if you need Docker socket
-    env_file:
-      - .env
-    entrypoint: ["sh", "-c"]
-    command: |
-      apk add --no-cache curl bash py3-cronolog busybox-suid && \
-      # create a cron file
-      echo "0 2 * * * cd /app && docker compose run --rm web python manage.py updatecatalog >> /app/logs/updatecatalog.log 2>&1" > /etc/crontabs/root && \
-      crond -f -L /app/logs/cron.log
-
   db:
     image: postgres:13-alpine
     container_name: gutendex_db
@@ -26,6 +11,16 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE_USER:-gutendex} -d ${DATABASE_NAME:-gutendex}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   web:
     build:
@@ -39,12 +34,19 @@ services:
       DATABASE_HOST: db
       DATABASE_PORT: 5432
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "${WEB_PORT:-8000}:8000"
     volumes:
       - static_volume:/var/www/gutendex/static
     command: ["gunicorn", "gutendex.wsgi:application", "--bind", "0.0.0.0:8000"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
 volumes:
   postgres_data:
