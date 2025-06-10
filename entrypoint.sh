@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
-# Wait for the database to be ready (optional but helpful)
+# Ensure STATIC_ROOT and MEDIA_ROOT directories exist and have correct permissions
+if [ -n "$STATIC_ROOT" ]; then
+  echo "Ensuring static directory exists at $STATIC_ROOT"
+  mkdir -p "$STATIC_ROOT"
+  chmod -R 755 "$STATIC_ROOT"
+fi
+
+# Wait for Postgres if DATABASE_HOST is set
 if [ -n "$DATABASE_HOST" ]; then
-  echo "Waiting for Postgres..."
-  until pg_isready -h "$DATABASE_HOST" -p "${DATABASE_PORT:-5432}" -U "$DATABASE_USER"; do
+  echo "Waiting for Postgres at $DATABASE_HOST:${DATABASE_PORT:-5432}..."
+  until pg_isready -h "$DATABASE_HOST" -p "${DATABASE_PORT:-5432}" -U "${DATABASE_USER:-}" >/dev/null 2>&1; do
     sleep 1
   done
 fi
@@ -17,7 +24,5 @@ python manage.py migrate --noinput
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# You could also seed initial data, create superuser, etc., here if needed
-
-# Finally execute the CMD
+# Finally execute the main command (e.g., gunicorn or runserver)
 exec "$@"
