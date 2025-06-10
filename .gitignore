@@ -2,3 +2,5 @@
 catalog_files
 gutendex/.env
 venv
+
+.env
