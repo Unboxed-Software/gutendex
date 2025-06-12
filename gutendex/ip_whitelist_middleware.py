@@ -37,11 +37,12 @@ class IPWhitelistMiddleware:
         # Get client IP address
         client_ip = self.get_client_ip(request)
 
-        print("IPWhitelistMiddleware =================================================")
-        print(f"Allowed IPs: {self.allowed_ips}")
-        print(f"Client IP: {client_ip}")
-        print(f"Is allowed: {self.is_ip_allowed(client_ip)}")
-        print("========================================================================")
+        if settings.DEBUG:
+            print("IPWhitelistMiddleware =================================================")
+            print(f"Allowed IPs: {self.allowed_ips}")
+            print(f"Client IP: {client_ip}")
+            print(f"Is allowed: {self.is_ip_allowed(client_ip)}")
+            print("========================================================================")
         
         # Check if IP whitelist is enabled and configured
         if self.allowed_ips and not self.is_ip_allowed(client_ip):
