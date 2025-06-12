@@ -19,6 +19,7 @@ env = environ.Env(
     ADMIN_EMAILS=(list, []),
     ADMIN_NAMES=(list, []),
     ALLOWED_HOSTS=(list, []),
+    ALLOWED_IPS=(list, []),
     DEBUG=(bool, False),
     MANAGER_EMAILS=(list, []),
     MANAGER_NAMES=(list, []),
@@ -40,6 +41,9 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
+
+# IP-based access control
+ALLOWED_IPS = env('ALLOWED_IPS')
 
 
 # Application definition
@@ -63,6 +67,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'gutendex.ip_whitelist_middleware.IPWhitelistMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
